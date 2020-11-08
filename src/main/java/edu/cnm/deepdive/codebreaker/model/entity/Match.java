@@ -4,10 +4,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import java.net.URI;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
+import javax.annotation.PostConstruct;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -27,7 +29,10 @@ import javax.persistence.TemporalType;
 import javax.persistence.Transient;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.GenericGenerator;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.server.EntityLinks;
 import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Component;
 
 @SuppressWarnings("JpaDataSourceORMInspection")
 @Entity
@@ -42,7 +47,10 @@ import org.springframework.lang.NonNull;
 @JsonIgnoreProperties(value = {"id", "started", "originator", "winner", "player", "games" }, allowGetters = true, ignoreUnknown = true
 )
 @JsonInclude(Include.NON_NULL)
+@Component
 public class Match {
+
+  private static EntityLinks entityLinks;
 
   @NonNull
   @Id
@@ -172,6 +180,23 @@ public class Match {
   @NonNull
   public List<Game> getGames() {
     return games;
+  }
+
+  public URI getHref() {
+    //noinspection ConstantConditions
+    return (id != null) ? entityLinks.linkForItemResource(Match.class, id).toUri(): null;
+  }
+
+  @PostConstruct
+  private void initHateoas() {
+    //noinspection ResultOfMethodCallIgnored
+    entityLinks.toString();
+  }
+
+  @Autowired
+  public void setEntityLinks(
+      @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection") EntityLinks entityLinks) {
+    Match.entityLinks = entityLinks;
   }
 
   public enum Criterion {
